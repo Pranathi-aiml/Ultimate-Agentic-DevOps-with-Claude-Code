@@ -1,90 +1,95 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## 1. Project Overview
 
-## Project Overview
+This repository contains a simple static portfolio website for a DevOps and cloud learning project.
 
-Static HTML/CSS portfolio website deployed to AWS using S3 + CloudFront, provisioned with Terraform, and automated via GitHub Actions.
+The website is built using HTML and CSS and is intended to remain lightweight, dependency-free, and easy to deploy.
 
-## Architecture
+Main project files:
 
-### Application (Static Site)
-- **index.html** — Single-page portfolio (About, Services, Courses, Books, Community, Contact)
-- **style.css** — All styling (~1145 lines), mobile-first responsive (breakpoints: 900px, 768px, 600px)
-- **privacy.html / terms.html** — Standalone pages with inline styles
-- **images/** — Static assets (logo, profile, course thumbnails, hero background)
-- Pure HTML5 + CSS3, no JavaScript, no build step
+- `index.html` — main portfolio/landing page
+- `style.css` — layout, styling, responsiveness, and presentation
+- `privacy.html` — privacy policy page
+- `terms.html` — terms and conditions page
+- `images/` — static image assets
+- `README.md` — project documentation
 
-### Infrastructure (`terraform/`)
-- AWS S3 bucket for static site hosting (private, OAC-based access)
-- CloudFront distribution as CDN with S3 origin
-- GitHub OIDC provider + IAM role for keyless CI/CD auth
-- Terraform state stored in S3 backend with DynamoDB locking
-- All resources tagged with `Project` and `Environment`
+Do not introduce unnecessary frameworks or dependencies.
 
-### CI/CD (`.github/workflows/`)
-- GitHub Actions workflow triggers on push to `main`
-- Syncs site files to S3, then invalidates CloudFront cache
-- Uses OIDC for AWS authentication (no long-lived keys)
+---
 
-## MCP Servers (`.mcp.json`)
+## 2. Technology and Deployment
 
-Two MCP servers are configured for Claude Code:
-- **aws** (`awslabs.aws-api-mcp-server`) — Direct AWS API access for querying and managing resources
-- **terraform** (`hashicorp/terraform-mcp-server`) — Terraform operations via Docker, workspace mounted at `/workspace`
+This is a static HTML/CSS website.
 
-AWS credentials and region are configured in `.claude/settings.local.json` (gitignored), not in `.mcp.json`. This keeps secrets out of version control and provides a single source of truth for all tools.
+The project uses:
 
-## Custom Agents (`.claude/agents/`)
+- HTML5
+- CSS3
+- Static image assets
+- AWS S3 for static website hosting
+- AWS CloudFront for content delivery
+- Terraform for infrastructure as code
 
-This project has 4 specialized subagents. Use them by name when delegating tasks:
-- **tf-writer** — generates Terraform code (has Write access + project memory)
-- **security-auditor** — audits TF for security issues (Read-only, Sonnet)
-- **cost-optimizer** — reviews infra cost (Read-only, Haiku)
-- **drift-detector** — detects state drift (Bash, Haiku)
+When discussing or planning cloud deployment, treat AWS S3, CloudFront, and Terraform as the project's intended cloud technologies.
 
-## Skills (`.claude/skills/`)
+Do not assume that a backend server or database is required.
 
-All infrastructure and deployment tasks are handled via skills. Do not write Terraform or CI/CD code manually — use the appropriate skill. Action skills have `disable-model-invocation: true` (manual only). The `project-scope` skill has `user-invocable: false` (auto-loaded by Claude as background knowledge).
+---
 
-```
-/scaffold-terraform [region] [name]  → Generate all Terraform files (uses tf-writer agent)
-/scaffold-cicd [aws-account-id]      → Generate GitHub Actions + OIDC IAM role
-/tf-plan                             → Run terraform plan + risk analysis
-/tf-apply                            → Run terraform apply + verify
-/deploy                              → Sync S3 + invalidate CloudFront
-/infra-status                        → Health dashboard of all resources
-/infra-audit                         → Parallel security + cost + drift audit (forked context)
-/setup-gh-actions [create|validate]  → Create or validate CI workflow
-/tf-destroy                          → Safe destroy with confirmation
-project-scope                        → Background knowledge: AWS service constraints (auto-loaded)
-/commit                              → Auto-generate commit message (built-in)
-/compact                             → Compress long conversation context (built-in)
-```
+## 3. Coding and Design Rules
 
-## Commands
+Follow these rules when modifying the project:
 
-```bash
-# Terraform
-cd terraform && terraform init
-cd terraform && terraform plan
-cd terraform && terraform apply
+- Use HTML and CSS only.
+- Do not add JavaScript.
+- Do not add React, Vue, Angular, or other frontend frameworks.
+- Do not add Node.js or npm dependencies.
+- Keep the website lightweight and dependency-free.
+- Preserve the existing HTML structure unless a change is necessary.
+- Reuse the existing `style.css` instead of creating unnecessary CSS files.
+- Preserve existing images and image paths.
+- Maintain responsive design for desktop and mobile screens.
+- Keep the visual style consistent with the existing portfolio.
+- Do not introduce unnecessary libraries or external dependencies.
 
-# Local preview
-open index.html
+If a requested feature requires JavaScript or React, explain that it conflicts with the project's "No JavaScript" convention and suggest an HTML/CSS-based alternative where possible.
 
-# Manual S3 sync (CI does this automatically)
-aws s3 sync . s3://$BUCKET_NAME --exclude "terraform/*" --exclude ".git/*" --exclude ".github/*" --exclude "*.md" --exclude ".claude/*"
-```
+---
 
-## Safety Layers
-1. **UserPromptSubmit hook** — catches destructive intent ("delete all", "nuke", "wipe") before Claude starts
-2. **PreToolUse hook** — blocks dangerous commands (terraform destroy, aws s3 rm) at execution time
-3. **Permissions** — auto-allows safe reads, blocks IAM and rm -rf
-4. **PostToolUse hook** — logs all terraform apply executions to `.claude/deploy.log`
+## 4. Change and File Management Guidelines
 
-## Conventions
-- Terraform files use `terraform/` directory with standard layout (main.tf, variables.tf, outputs.tf)
-- GitHub Actions uses OIDC — no stored AWS access keys
-- All infrastructure changes go through Terraform — never modify AWS resources manually
-- Site content changes deploy automatically via GitHub Actions on push to main
+Before making changes:
+
+1. Inspect the relevant existing HTML and CSS.
+2. Understand the current structure before editing.
+3. Modify only the files required for the requested task.
+4. Avoid unnecessary changes to unrelated files.
+5. Keep filenames and existing asset paths unchanged unless there is a specific reason to change them.
+6. Do not delete existing pages or assets without explicit instruction.
+7. Keep `privacy.html` and `terms.html` functional and accessible.
+8. Do not add build tools or package configuration unless explicitly required.
+
+When making a change, briefly explain which files were modified and why.
+
+---
+
+## 5. Validation and Deployment Guidance
+
+After making changes:
+
+- Check the HTML structure for obvious errors.
+- Check that links between pages still work.
+- Check that image paths are correct.
+- Check that the CSS is applied correctly.
+- Verify the layout at different screen sizes.
+- Confirm that no JavaScript or unnecessary dependencies were introduced.
+
+For cloud deployment discussions, use the following project context:
+
+- AWS S3 is used to host the static website.
+- AWS CloudFront is used as the content delivery layer.
+- Terraform is used to define and manage the AWS infrastructure as code.
+
+When Claude is asked about deploying this project, explain the relationship between S3, CloudFront, and Terraform in the context of this static website.
